@@ -60,6 +60,19 @@ enum Events
 
 };
 
+class FLEloxinPlayer : public PlayerScript
+{
+public:
+    FLEloxinPlayer() : PlayerScript("FLEloxinPlayer") { }
+
+    void OnLogin(Player* player) override
+    {
+        if (sConfigMgr->GetOption<bool>("FLEloxin.Enable", true))
+        {
+            ChatHandler(player->GetSession()).SendSysMessage("Hello World from Eloxin-Module!");
+        }
+    }
+};
 
 class boss_eloxin : public CreatureScript
 {
@@ -203,4 +216,5 @@ public:
 void AddSC_BossEloxinScript()
 {
     new boss_eloxin();
+    new FLEloxinPlayer();
 }
