@@ -82,16 +82,6 @@ public:
     struct boss_eloxinAI : public BossAI
     {
         boss_eloxinAI(Creature* creature) : BossAI(creature, 0) {
-            Initialize();
-        }
-
-        void Initialize()
-        {
-            uint8 Phase = 0;
-            uint32 DarkGlareTick = 0;
-            float DarkGlareAngle = 0;
-            bool ClockWise = false;
-            float angle = 0;
         }
 
         void SetPhase(uint8 ph)
@@ -117,11 +107,9 @@ public:
         void Reset() override
         {
             // Implement boss reset behavior
-            Initialize();
             DarkGlareTick = 0;
             DarkGlareAngle = 0;
             ClockWise = false;
-            ClockWise = RAND(true, false);
             events.Reset();
             BossAI::Reset();
         }
@@ -131,7 +119,6 @@ public:
             Talk(SAY_ENGAGE);
             SetPhase(PHASE_ONE);
             BossAI::JustEngagedWith(who);
-            Initialize();
         }
 
         void UpdateAI(uint32 diff) override
