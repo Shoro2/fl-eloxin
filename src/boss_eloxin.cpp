@@ -79,9 +79,9 @@ class boss_eloxin : public CreatureScript
 public:
     boss_eloxin() : CreatureScript("boss_eloxin") { }
 
-    struct boss_eloxinAI : public BossAI
+    struct boss_eloxinAI : public ScriptedAI
     {
-        boss_eloxinAI(Creature* creature) : BossAI(creature, 0) {
+        boss_eloxinAI(Creature* creature) : ScriptedAI(creature) {
         }
 
         void SetPhase(uint8 ph)
@@ -111,14 +111,14 @@ public:
             DarkGlareAngle = 0;
             ClockWise = false;
             events.Reset();
-            BossAI::Reset();
+            ScriptedAI::Reset();
         }
 
         void JustEngagedWith(Unit* who) override
         {
             Talk(SAY_ENGAGE);
             SetPhase(PHASE_ONE);
-            BossAI::JustEngagedWith(who);
+            ScriptedAI::JustEngagedWith(who);
         }
 
         void UpdateAI(uint32 diff) override
