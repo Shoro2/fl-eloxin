@@ -179,17 +179,6 @@ public:
                     events.RepeatEvent(1000);
                 }
                 break;
-
-            case EVENT_START_PHASE_2:
-                if (me->HasUnitFlag(UNIT_FLAG_DISARMED))
-                {
-                    events.RepeatEvent(5000);
-                }
-                else
-                {
-                    events.RepeatEvent(urand(18000, 21000));
-                }
-                break;
             }
         }
 
@@ -205,6 +194,11 @@ public:
         bool ClockWise;
         float angle;
     };
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new boss_eloxinAI(creature);
+    }
 };
 
 void AddSC_BossEloxinScript()
