@@ -131,7 +131,7 @@ public:
             {
             case EVENT_SPELL_POISON_BEAM:
 
-
+                sWorld->SendWorldText(LANG_EVENTMESSAGE, "Start spinning");
                 DoCast(me, SPELL_FREEZE_ANIM, true);
                 me->StopMoving();
 
@@ -149,6 +149,7 @@ public:
                 break;
 
             case EVENT_SPELL_POISON_BEAM_TICK:
+                sWorld->SendWorldText(LANG_EVENTMESSAGE, "spin tick");
                 angle = ClockWise ? DarkGlareAngle + DarkGlareTick * float(M_PI) / 35 : DarkGlareAngle - DarkGlareTick * float(M_PI) / 35;
                 me->SetFacingTo(angle);
                 me->SetOrientation(angle);
@@ -161,6 +162,7 @@ public:
                     me->SetReactState(REACT_AGGRESSIVE);
                     me->RemoveAurasDueToSpell(SPELL_FREEZE_ANIM);
                     me->InterruptNonMeleeSpells(false);
+                    sWorld->SendWorldText(LANG_EVENTMESSAGE, "spin done");
                 }
                 else {
                     events.RepeatEvent(1000);
