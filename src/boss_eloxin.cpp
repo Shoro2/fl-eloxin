@@ -71,6 +71,7 @@ public:
         boss_eloxinAI(Creature* creature) : BossAI(creature, 0) { }
         void Initialize()
         {
+            events.ScheduleEvent(EVENT_SPELL_POISON_BEAM, 30000);
         }
 
         void SetPhase(uint8 ph)
@@ -101,6 +102,8 @@ public:
             DarkGlareAngle = 0;
             ClockWise = false;
             ClockWise = RAND(true, false);
+            events.Reset();
+            BossAI::Reset();
         }
 
         void JustEngagedWith(Unit* who) override
@@ -108,6 +111,7 @@ public:
             Talk(SAY_ENGAGE);
             SetPhase(PHASE_ONE);
             BossAI::JustEngagedWith(who);
+            Initialize();
         }
 
         void UpdateAI(uint32 diff) override
