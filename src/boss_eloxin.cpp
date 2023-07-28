@@ -143,7 +143,7 @@ public:
             case EVENT_SPELL_POISON_BEAM:
 
                 sWorld->SendWorldText(LANG_EVENTMESSAGE, "Start spinning");
-                DoCast(me, SPELL_FREEZE_ANIM, true);
+                //DoCast(me, SPELL_FREEZE_ANIM, true);
                 me->StopMoving();
 
                 ClockWise = RAND(true, false);
@@ -165,7 +165,7 @@ public:
                 me->SetFacingTo(angle);
                 me->SetOrientation(angle);
 
-                DoCastSelf(SPELL_POISON_BEAM);
+                DoCastVictim(SPELL_POISON_BEAM);
 
                 ++DarkGlareTick;
 
