@@ -18,7 +18,7 @@ enum Spells
     SPELL_NEUROTOXIN = 12345,
     SPELL_POSION_CLAW = 12345,
 
-    SPELL_POISON_BEAM = 12345,
+    SPELL_POISON_BEAM = 63226,
     SPELL_FREEZE_ANIM = 16245,
     SPELL_SPAWN_MUSHROOMS = 12345,
     SPELL_MARK_OF_ELOXIN = 12345,
@@ -72,7 +72,6 @@ public:
         void Initialize()
         {
         }
-
 
         void SetPhase(uint8 ph)
         {
@@ -194,12 +193,6 @@ public:
         float angle;
     };
 };
-
-
-
-
-
-
 
 void AddSC_BossEloxinScript()
 {
