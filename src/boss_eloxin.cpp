@@ -81,10 +81,17 @@ public:
 
     struct boss_eloxinAI : public BossAI
     {
-        boss_eloxinAI(Creature* creature) : BossAI(creature, 0) { }
+        boss_eloxinAI(Creature* creature) : BossAI(creature, 0) {
+            Initialize();
+        }
+
         void Initialize()
         {
-            events.ScheduleEvent(EVENT_SPELL_POISON_BEAM, 30000);
+            uint8 Phase = 0;
+            uint32 DarkGlareTick = 0;
+            float DarkGlareAngle = 0;
+            bool ClockWise = false;
+            float angle = 0;
         }
 
         void SetPhase(uint8 ph)
