@@ -18,7 +18,7 @@ enum Spells
     SPELL_NEUROTOXIN = 12345,
     SPELL_POSION_CLAW = 12345,
 
-    SPELL_POISON_BEAM = 63226,
+    SPELL_POISON_BEAM = 26029,
     SPELL_FREEZE_ANIM = 16245,
     SPELL_SPAWN_MUSHROOMS = 12345,
     SPELL_MARK_OF_ELOXIN = 12345,
@@ -91,7 +91,7 @@ public:
             switch (ph)
             {
             case PHASE_ONE:
-                events.ScheduleEvent(EVENT_SPELL_POISON_BEAM, 30000);
+                events.ScheduleEvent(EVENT_SPELL_POISON_BEAM, 1000);
                 //events.ScheduleEvent(EVENT_SPELL_NEUROTOXIN, urand(5000, 10000));
                 //events.ScheduleEvent(EVENT_SPELL_POSION_CLAW, urand(15000, 20000));
                 break;
