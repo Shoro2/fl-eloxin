@@ -18,7 +18,7 @@ enum Spells
     SPELL_NEUROTOXIN = 12345,
     SPELL_POSION_CLAW = 12345,
 
-    SPELL_POISON_BEAM = 26029,
+    SPELL_POISON_BEAM = 550100,
     SPELL_FREEZE_ANIM = 16245,
     SPELL_SPAWN_MUSHROOMS = 12345,
     SPELL_MARK_OF_ELOXIN = 12345,
@@ -177,7 +177,7 @@ public:
                     sWorld->SendWorldText(LANG_EVENTMESSAGE, "spin done");
                 }
                 else {
-                    events.RepeatEvent(1000);
+                    events.RepeatEvent(100);
                 }
                 break;
             }
