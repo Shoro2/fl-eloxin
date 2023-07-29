@@ -143,6 +143,7 @@ public:
             case EVENT_SPELL_POISON_BEAM:
 
                 sWorld->SendWorldText(LANG_EVENTMESSAGE, "Start spinning");
+                me->SetTarget(ObjectGuid::Empty);
                 //DoCast(me, SPELL_FREEZE_ANIM, true);
                 me->StopMoving();
 
