@@ -14,9 +14,9 @@ enum Texts
 
 enum Spells
 {
-    SPELL_POISON_WAVE = 12345,
-    SPELL_NEUROTOXIN = 12345,
-    SPELL_POSION_CLAW = 12345,
+    SPELL_POISON_NOVA = 550102,
+    SPELL_NEUROTOXIN = 550103,
+    SPELL_SEPSIS = 550104,
 
     SPELL_POISON_BEAM = 550100,
     SPELL_POISON_BEAM_CAST = 550101,
@@ -26,8 +26,9 @@ enum Spells
 
     SPELL_SPAWN_SACRIFICES = 12345,
     SPELL_EVOLVING_GROWTH = 12345,
-    SPELL_SPAWN_GUARDIAN = 12345
+    SPELL_SPAWN_GUARDIAN = 12345,
 
+    SPELL_POISON_BOLT_VOLLEY = 550105
 };
 
 enum Phases
@@ -40,9 +41,9 @@ enum Phases
 
 enum Events
 {
-    EVENT_SPELL_POISON_WAVE = 1,
+    EVENT_SPELL_POISON_NOVA = 1,
     EVENT_SPELL_NEUROTOXIN = 2,
-    EVENT_SPELL_POSION_CLAW = 3,
+    EVENT_SPELL_SEPSIS = 3,
 
     EVENT_SPELL_POISON_BEAM = 4,
     EVENT_SPELL_POISON_BEAM_TICK = 15,
@@ -54,12 +55,16 @@ enum Events
     EVENT_SPELL_EVOLVING_GROWTH = 8,
     EVENT_SPELL_SPAWN_GUARDIAN = 9,
 
+    EVENT_SPELL_POISON_BOLT_VOLLEY = 17,
+    EVENT_SPELL_POISON_BOLT_VOLLEY_CASTED = 18,
+
     EVENT_START_PULL = 10,
     EVENT_START_PHASE_2 = 11,
     EVENT_START_PHASE_3 = 12,
     EVENT_END_WIPE = 13,
     EVENT_END_DEATH = 14
 
+    
 };
 
 class FLEloxinPlayer : public PlayerScript
@@ -93,12 +98,14 @@ public:
             switch (ph)
             {
             case PHASE_ONE:
-                events.ScheduleEvent(EVENT_SPELL_POISON_BEAM_CAST, 5000);
-                //events.ScheduleEvent(EVENT_SPELL_NEUROTOXIN, urand(5000, 10000));
-                //events.ScheduleEvent(EVENT_SPELL_POSION_CLAW, urand(15000, 20000));
+                events.ScheduleEvent(EVENT_SPELL_POISON_NOVA, 35000);
+                events.ScheduleEvent(EVENT_SPELL_NEUROTOXIN, urand(5000, 10000));
+                events.ScheduleEvent(EVENT_SPELL_SEPSIS, 11000);
+                events.ScheduleEvent(EVENT_SPELL_POISON_BEAM_CAST, 60000);
                 break;
             case PHASE_TWO:
                 events.ScheduleEvent(EVENT_START_PHASE_2, 0);
+                
                 break;
             case PHASE_THREE:
                 events.ScheduleEvent(EVENT_START_PHASE_3, 5000);
@@ -140,34 +147,58 @@ public:
 
             DoMeleeAttackIfReady();
 
+            eloxin_target = me->SelectNearestTarget();
+            if (me->GetDistance(eloxin_target->GetPosition()) > 15 && !castedPBV) {
+                events.ScheduleEvent(EVENT_SPELL_POISON_BOLT_VOLLEY, 0);
+                events.ScheduleEvent(EVENT_SPELL_POISON_BOLT_VOLLEY_CASTED, 1000);
+                castedPBV = true;
+            }
+
             switch (events.ExecuteEvent())
             {
+            case EVENT_SPELL_POISON_NOVA:
+                DoCast(SPELL_POISON_NOVA);
+                events.RepeatEvent(35000);
+                break;
+            case EVENT_SPELL_POISON_BOLT_VOLLEY_CASTED:
+                castedPBV = false;
+                break;
+
+            case EVENT_SPELL_POISON_BOLT_VOLLEY:
+                DoCast(SPELL_POISON_BOLT_VOLLEY);
+                break;
+
+            case EVENT_SPELL_SEPSIS:
+                Sepsis_target = SelectTarget(SelectTargetMethod::MaxThreat, 0, 0.0f, true);
+                DoCast(Sepsis_target, SPELL_SEPSIS, true);
+                events.RepeatEvent(11000);
+                break;
+
+            case EVENT_SPELL_NEUROTOXIN:
+                NT_target = SelectTarget(SelectTargetMethod::Random, 0, 0.0f, true);
+                DoCast(NT_target, SPELL_NEUROTOXIN, true);
+                events.RepeatEvent(urand(5000, 10000));
+                break;
 
             case EVENT_SPELL_POISON_BEAM_CAST:
+                isSpinning = true;
                 PB_target = SelectTarget(SelectTargetMethod::Random, 0, 0.0f, true);
                 PoisonBeamAngle = me->GetAngle(PB_target);
                 me->SetOrientation(PoisonBeamAngle);
                 me->SetFacingTo(PoisonBeamAngle);
-                //DoCastVictim(SPELL_POISON_BEAM_CAST);
+                me->StopMoving();
                 DoCastSelf(SPELL_POISON_BEAM_CAST);
+                me->SetTarget(ObjectGuid::Empty);
                 events.ScheduleEvent(EVENT_SPELL_POISON_BEAM, 5000);
                 break;
+
             case EVENT_SPELL_POISON_BEAM:
-
-                sWorld->SendWorldText(LANG_EVENTMESSAGE, "Start spinning");
-                me->SetTarget(ObjectGuid::Empty);
-                //DoCast(me, SPELL_FREEZE_ANIM, true);
-                me->StopMoving();
-
                 ClockWise = RAND(true, false);
                 PoisonBeamTick = 0;
-
-                events.ScheduleEvent(EVENT_SPELL_POISON_BEAM_TICK, 1000);
-                events.RepeatEvent(60000);
+                events.ScheduleEvent(EVENT_SPELL_POISON_BEAM_TICK, 100);
                 break;
 
             case EVENT_SPELL_POISON_BEAM_TICK:
-                sWorld->SendWorldText(LANG_EVENTMESSAGE, "spin tick");
                 angle = ClockWise ? PoisonBeamAngle + PoisonBeamTick * float(M_PI) / 35 : PoisonBeamAngle - PoisonBeamTick * float(M_PI) / 35;
                 me->SetFacingTo(angle);
                 me->SetOrientation(angle);
@@ -178,9 +209,10 @@ public:
 
                 if (PoisonBeamTick >= 60) {
                     me->SetReactState(REACT_AGGRESSIVE);
-                    me->RemoveAurasDueToSpell(SPELL_FREEZE_ANIM);
                     me->InterruptNonMeleeSpells(false);
-                    sWorld->SendWorldText(LANG_EVENTMESSAGE, "spin done");
+                    events.ScheduleEvent(EVENT_SPELL_POISON_BEAM_CAST, 10000);
+                    me->SetTarget(PB_target->GetGUID());
+                    isSpinning = false;
                 }
                 else {
                     events.RepeatEvent(100);
@@ -198,9 +230,13 @@ public:
         uint8 Phase;
         uint32 PoisonBeamTick;
         float PoisonBeamAngle;
-        bool ClockWise;
+        bool castedPBV = false;
+        bool ClockWise, isSpinning;
         float angle;
         Unit* PB_target;
+        Unit* eloxin_target;
+        Unit* Sepsis_target;
+        Unit* NT_target;
     };
 
     CreatureAI* GetAI(Creature* creature) const
