@@ -148,7 +148,8 @@ public:
                 PoisonBeamAngle = me->GetAngle(PB_target);
                 me->SetOrientation(PoisonBeamAngle);
                 me->SetFacingTo(PoisonBeamAngle);
-                DoCastVictim(SPELL_POISON_BEAM_CAST);
+                //DoCastVictim(SPELL_POISON_BEAM_CAST);
+                DoCastSelf(SPELL_POISON_BEAM_CAST);
                 events.ScheduleEvent(EVENT_SPELL_POISON_BEAM, 5000);
                 break;
             case EVENT_SPELL_POISON_BEAM:
