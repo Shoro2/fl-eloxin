@@ -19,6 +19,7 @@ enum Spells
     SPELL_POSION_CLAW = 12345,
 
     SPELL_POISON_BEAM = 550100,
+    SPELL_POISON_BEAM_CAST = 550101,
     SPELL_FREEZE_ANIM = 16245,
     SPELL_SPAWN_MUSHROOMS = 12345,
     SPELL_MARK_OF_ELOXIN = 12345,
@@ -45,6 +46,7 @@ enum Events
 
     EVENT_SPELL_POISON_BEAM = 4,
     EVENT_SPELL_POISON_BEAM_TICK = 15,
+    EVENT_SPELL_POISON_BEAM_CAST = 16,
     EVENT_SPELL_SPAWN_MUSHROOMS = 5,
     EVENT_SPELL_MARK_OF_ELOXIN = 6,
 
@@ -91,7 +93,7 @@ public:
             switch (ph)
             {
             case PHASE_ONE:
-                events.ScheduleEvent(EVENT_SPELL_POISON_BEAM, 1000);
+                events.ScheduleEvent(EVENT_SPELL_POISON_BEAM_CAST, 5000);
                 //events.ScheduleEvent(EVENT_SPELL_NEUROTOXIN, urand(5000, 10000));
                 //events.ScheduleEvent(EVENT_SPELL_POSION_CLAW, urand(15000, 20000));
                 break;
@@ -107,8 +109,8 @@ public:
         void Reset() override
         {
             // Implement boss reset behavior
-            DarkGlareTick = 0;
-            DarkGlareAngle = 0;
+            PoisonBeamTick = 0;
+            PoisonBeamAngle = 0;
             ClockWise = false;
             events.Reset();
             ScriptedAI::Reset();
@@ -140,6 +142,15 @@ public:
 
             switch (events.ExecuteEvent())
             {
+
+            case EVENT_SPELL_POISON_BEAM_CAST:
+                PB_target = SelectTarget(SelectTargetMethod::Random, 0, 0.0f, true);
+                PoisonBeamAngle = me->GetAngle(PB_target);
+                me->SetOrientation(PoisonBeamAngle);
+                me->SetFacingTo(PoisonBeamAngle);
+                DoCastVictim(SPELL_POISON_BEAM_CAST);
+                events.ScheduleEvent(EVENT_SPELL_POISON_BEAM, 5000);
+                break;
             case EVENT_SPELL_POISON_BEAM:
 
                 sWorld->SendWorldText(LANG_EVENTMESSAGE, "Start spinning");
@@ -148,13 +159,7 @@ public:
                 me->StopMoving();
 
                 ClockWise = RAND(true, false);
-                if (Unit* target = SelectTarget(SelectTargetMethod::Random, 0, 0.0f, true))
-                {
-                    DarkGlareAngle = me->GetAngle(target); //keep as the location dark glare will be at
-                }
-                me->SetOrientation(DarkGlareAngle);
-                me->SetFacingTo(DarkGlareAngle);
-                DarkGlareTick = 0;
+                PoisonBeamTick = 0;
 
                 events.ScheduleEvent(EVENT_SPELL_POISON_BEAM_TICK, 1000);
                 events.RepeatEvent(60000);
@@ -162,15 +167,15 @@ public:
 
             case EVENT_SPELL_POISON_BEAM_TICK:
                 sWorld->SendWorldText(LANG_EVENTMESSAGE, "spin tick");
-                angle = ClockWise ? DarkGlareAngle + DarkGlareTick * float(M_PI) / 35 : DarkGlareAngle - DarkGlareTick * float(M_PI) / 35;
+                angle = ClockWise ? PoisonBeamAngle + PoisonBeamTick * float(M_PI) / 35 : PoisonBeamAngle - PoisonBeamTick * float(M_PI) / 35;
                 me->SetFacingTo(angle);
                 me->SetOrientation(angle);
 
                 DoCastVictim(SPELL_POISON_BEAM);
 
-                ++DarkGlareTick;
+                ++PoisonBeamTick;
 
-                if (DarkGlareTick >= 35) {
+                if (PoisonBeamTick >= 60) {
                     me->SetReactState(REACT_AGGRESSIVE);
                     me->RemoveAurasDueToSpell(SPELL_FREEZE_ANIM);
                     me->InterruptNonMeleeSpells(false);
@@ -190,10 +195,11 @@ public:
 
     private:
         uint8 Phase;
-        uint32 DarkGlareTick;
-        float DarkGlareAngle;
+        uint32 PoisonBeamTick;
+        float PoisonBeamAngle;
         bool ClockWise;
         float angle;
+        Unit* PB_target;
     };
 
     CreatureAI* GetAI(Creature* creature) const
