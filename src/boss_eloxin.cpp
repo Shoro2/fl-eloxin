@@ -95,6 +95,8 @@ enum Events
 
     EVENT_AURA_REFRESH_TICK = 21,
 
+    EVENT_DESPAWN = 22,
+
     
 };
 
@@ -118,9 +120,9 @@ public:
             switch (ph)
             {
             case PHASE_ONE:
-                events.ScheduleEvent(EVENT_SPELL_POISON_NOVA, 35000);
+                events.ScheduleEvent(EVENT_SPELL_POISON_NOVA, 15000);
                 events.ScheduleEvent(EVENT_SPELL_NEUROTOXIN, urand(5000, 10000));
-                events.ScheduleEvent(EVENT_SPELL_SEPSIS, 11000);
+                events.ScheduleEvent(EVENT_SPELL_SEPSIS, 10000);
                 Talk(SAY_ENGAGE);
                 break;
             case PHASE_TWO:
@@ -148,7 +150,8 @@ public:
             ScriptedAI::Reset();
             auraStacks = 0;
             RemoveMushrooms();
-            me->RemoveAura(SPELL_AURA_SYMBIOSIS);
+            if(me->HasAura(SPELL_AURA_SYMBIOSIS)) me->RemoveAura(SPELL_AURA_SYMBIOSIS);
+            
         }
 
         void RemoveMushrooms() {
@@ -168,8 +171,8 @@ public:
             for (Creature* creature : blueShroomsInRange) {
                 creature->DespawnOrUnsummon();
             }
-
-            me->SetAuraStack(SPELL_AURA_SYMBIOSIS, me, 0);
+            if(me->HasAura(SPELL_AURA_SYMBIOSIS)) me->SetAuraStack(SPELL_AURA_SYMBIOSIS, me, 0);
+            
             
                        
         }
@@ -221,6 +224,9 @@ public:
 
             switch (events.ExecuteEvent())
             {
+            case EVENT_DESPAWN:
+                me->DespawnOrUnsummon();
+                break;
             case EVENT_SPELL_POISON_NOVA:
                 DoCast(SPELL_POISON_NOVA);
                 events.RepeatEvent(35000);
@@ -236,13 +242,15 @@ public:
             case EVENT_SPELL_SEPSIS:
                 Sepsis_target = SelectTarget(SelectTargetMethod::MaxThreat, 0, 0.0f, true);
                 DoCast(Sepsis_target, SPELL_SEPSIS, true);
-                events.RepeatEvent(11000);
+                events.RepeatEvent(10000);
                 break;
 
             case EVENT_SPELL_NEUROTOXIN:
                 NT_target = SelectTarget(SelectTargetMethod::Random, 0, 0.0f, true);
                 DoCast(NT_target, SPELL_NEUROTOXIN, true);
-                events.RepeatEvent(urand(5000, 10000));
+                NT_target = SelectTarget(SelectTargetMethod::Random, 0, 0.0f, true);
+                DoCast(NT_target, SPELL_NEUROTOXIN, true);
+                events.RepeatEvent(urand(3000, 6000));
                 break;
 
             case EVENT_SPELL_POISON_BEAM_CAST:
@@ -306,7 +314,7 @@ public:
                 }
                 spawnedShroom->CombatStart(Shroom_target, true);
                 spawnedShroom->SetTarget();
-                events.RepeatEvent(10000);
+                events.RepeatEvent(8000);
                 auraStacks++;
                 break;
 
@@ -335,6 +343,7 @@ public:
             // Implement boss death behavior
             Talk(SAY_DEATH);
             RemoveMushrooms();
+            //events.ScheduleEvent(EVENT_DESPAWN, 10000);
         }
 
     private:
@@ -438,7 +447,7 @@ public:
     {
         EloxinSummonerAI(GameObject* go) : GameObjectAI(go) {}
 
-        virtual void SummonedCreatureDespawn(Creature* /*summon*/) {
+        virtual void SummonedCreatureDespawn(Creature* /*summon*/) override{
             me->RemoveGameObjectFlag(GO_FLAG_NOT_SELECTABLE);
         }
 
