@@ -4,6 +4,7 @@
 
 // From SC
 void AddSC_BossEloxinScript();
+void AddSC_BossVecnaScript();
 
 // Add all
 // cf. the naming convention https://github.com/azerothcore/azerothcore-wotlk/blob/master/doc/changelog/master.md#how-to-upgrade-4
@@ -11,5 +12,6 @@ void AddSC_BossEloxinScript();
 void Addfl_eloxinScripts()
 {
     AddSC_BossEloxinScript();
+    AddSC_BossVecnaScript();
 }
 
