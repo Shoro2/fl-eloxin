@@ -6,7 +6,6 @@
 #include "GameObject.h"
 #include "GameObjectAI.h"
 #include "ScriptedGossip.h"
-#include "ThreatMgr.h"
 #include "SpellScript.h"
 
 enum Texts
@@ -23,10 +22,10 @@ enum Texts
 
 enum Adds
 {
-    NPC_IMP = 9953,
-    NPC_DEMON = 9954,
-    NPC_PORTAL_1 = 9951,
-    NPC_PORTAL_2 = 9952,
+    NPC_VECNA_IMP = 9953,
+    NPC_VECNA_DEMON = 9954,
+    NPC_VECNA_PORTAL_1 = 9951,
+    NPC_VECNA_PORTAL_2 = 9952,
 };
 
 enum Phases
@@ -71,8 +70,10 @@ public:
 
     struct boss_vecnaAI : public ScriptedAI
     {
-        boss_vecnaAI(Creature* creature) : ScriptedAI(creature) {
-
+        boss_vecnaAI(Creature* creature) : ScriptedAI(creature),
+            Phase(PHASE_ENGAGE), pool_target(nullptr), portalOne(nullptr),
+            portalTwo(nullptr)
+        {
         }
 
         void SetPhase(uint8 ph)
@@ -82,15 +83,15 @@ public:
             switch (ph)
             {
             case PHASE_ONE:
-                events.ScheduleEvent(EVENT_PORTAL_ONE, 1000);
+                events.ScheduleEvent(EVENT_PORTAL_ONE, Milliseconds(1000));
                 Talk(SAY_ENGAGE);
                 break;
             case PHASE_TWO:
-                events.ScheduleEvent(EVENT_PORTAL_TWO, 1000);
+                events.ScheduleEvent(EVENT_PORTAL_TWO, Milliseconds(1000));
                 Talk(SAY_P2);
                 break;
             case PHASE_THREE:
-                events.ScheduleEvent(EVENT_SPELL_POOL, 25000);
+                events.ScheduleEvent(EVENT_SPELL_POOL, Milliseconds(25000));
                 Talk(SAY_P3);
                 break;
             }
@@ -99,6 +100,10 @@ public:
         void Reset() override
         {
             events.Reset();
+            Phase = PHASE_ENGAGE;
+            pool_target = nullptr;
+            portalOne = nullptr;
+            portalTwo = nullptr;
             ScriptedAI::Reset();
         }
 
@@ -106,14 +111,16 @@ public:
             std::list<Creature*> impsInRange;
             std::list<Creature*> demonsInRange;
 
-            me->GetCreaturesWithEntryInRange(impsInRange, 200, NPC_IMP);
-            me->GetCreaturesWithEntryInRange(demonsInRange, 200, NPC_DEMON);
+            me->GetCreaturesWithEntryInRange(
+                impsInRange, 200, NPC_VECNA_IMP);
+            me->GetCreaturesWithEntryInRange(
+                demonsInRange, 200, NPC_VECNA_DEMON);
 
-            if (portalOne->IsAlive()) {
+            if (portalOne && portalOne->IsAlive()) {
                 portalOne->DespawnOrUnsummon();
             }
 
-            if (portalTwo->IsAlive()) {
+            if (portalTwo && portalTwo->IsAlive()) {
                 portalTwo->DespawnOrUnsummon();
             }
 
@@ -131,29 +138,34 @@ public:
             Talk(SAY_ENGAGE);
             SetPhase(PHASE_ONE);
             ScriptedAI::JustEngagedWith(who);
-            events.ScheduleEvent(EVENT_AURA_START, 1000);
+            events.ScheduleEvent(EVENT_AURA_START, Milliseconds(1000));
         }
 
-        void DamageTaken(Unit*, uint32& damage, DamageEffectType, SpellSchoolMask) override
+        void DamageTaken(Unit*, uint32& damage, DamageEffectType,
+            SpellSchoolMask) override
         {
             if (me->HealthBelowPctDamaged(95, damage) && Phase == PHASE_ENGAGE)
             {
                 SetPhase(PHASE_ONE);
             }
-            else if (me->HealthBelowPctDamaged(85, damage) && Phase == PHASE_ONE)
+            else if (me->HealthBelowPctDamaged(85, damage) &&
+                Phase == PHASE_ONE)
             {
                 SetPhase(PHASE_TWO);
             }
-            else if (me->HealthBelowPctDamaged(60, damage) && Phase == PHASE_TWO)
+            else if (me->HealthBelowPctDamaged(60, damage) &&
+                Phase == PHASE_TWO)
             {
                 SetPhase(PHASE_THREE);
             }
-            else if (me->HealthBelowPctDamaged(30, damage) && Phase == PHASE_THREE)
+            else if (me->HealthBelowPctDamaged(30, damage) &&
+                Phase == PHASE_THREE)
             {
                 SetPhase(PHASE_END);
             }
             /*
-            else if (me->HealthBelowPctDamaged(40, damage) && Phase == PHASE_TWO)
+            else if (me->HealthBelowPctDamaged(40, damage) &&
+                Phase == PHASE_TWO)
             {
                 SetPhase(PHASE_THREE);
             }
@@ -182,38 +194,50 @@ public:
 
             case EVENT_PORTAL_ONE:
                 //spawn portal
-                me->SummonCreature(NPC_PORTAL_1, -174.97644, -813.807129, 41.620617, 2.28, TEMPSUMMON_MANUAL_DESPAWN, 100);
-                events.ScheduleEvent(EVENT_SPAWN_IMP, 2000);
+                portalOne = me->SummonCreature(NPC_VECNA_PORTAL_1, -174.97644,
+                    -813.807129, 41.620617, 2.28,
+                    TEMPSUMMON_MANUAL_DESPAWN, 100);
+                events.ScheduleEvent(EVENT_SPAWN_IMP, Milliseconds(2000));
                 break;
             case EVENT_PORTAL_TWO:
                 //spawn portal
-                me->SummonCreature(NPC_PORTAL_2, -174.97644, -813.807129, 41.620617, 2.28, TEMPSUMMON_MANUAL_DESPAWN, 100);
-                events.ScheduleEvent(EVENT_SPAWN_DEMON, 2000);
+                portalTwo = me->SummonCreature(NPC_VECNA_PORTAL_2, -174.97644,
+                    -813.807129, 41.620617, 2.28,
+                    TEMPSUMMON_MANUAL_DESPAWN, 100);
+                events.ScheduleEvent(EVENT_SPAWN_DEMON, Milliseconds(2000));
                 break;
 
             case EVENT_SPAWN_IMP:
-                if (portalOne->IsAlive()) {
-                    me->SummonCreature(NPC_IMP, -174.97644, -813.807129, 41.620617, 2.28, TEMPSUMMON_CORPSE_DESPAWN);
+                if (portalOne && portalOne->IsAlive()) {
+                    me->SummonCreature(NPC_VECNA_IMP, -174.97644,
+                        -813.807129, 41.620617, 2.28,
+                        TEMPSUMMON_CORPSE_DESPAWN);
                 }
-                events.RepeatEvent(10000);
+                events.Repeat(Milliseconds(10000));
                 break;
 
             case EVENT_SPAWN_DEMON:
-                if (portalTwo->IsAlive()) {
-                    me->SummonCreature(NPC_DEMON, -174.97644, -813.807129, 41.620617, 2.28, TEMPSUMMON_CORPSE_DESPAWN);
+                if (portalTwo && portalTwo->IsAlive()) {
+                    me->SummonCreature(NPC_VECNA_DEMON, -174.97644,
+                        -813.807129, 41.620617, 2.28,
+                        TEMPSUMMON_CORPSE_DESPAWN);
                 }
-                events.RepeatEvent(35000);
+                events.Repeat(Milliseconds(35000));
                 break;
 
             case EVENT_SPELL_POOL:
-                pool_target = SelectTarget(SelectTargetMethod::Random, 0, 0.0f, true);
-                DoCast(pool_target, SPELL_POOL, true);
-                events.RepeatEvent(urand(20000, 25000));
+                pool_target = SelectTarget(
+                    SelectTargetMethod::Random, 0, 0.0f, true);
+                if (pool_target && SPELL_POOL)
+                {
+                    DoCast(pool_target, SPELL_POOL, true);
+                }
+                events.Repeat(Milliseconds(urand(20000, 25000)));
                 break;
 
             case EVENT_AURA_START:
                 DoCastAOE(SPELL_BOSS_AURA);
-                events.RepeatEvent(2000);
+                events.Repeat(Milliseconds(2000));
                 break;
             }
         }
@@ -295,7 +319,7 @@ public:
             {
             case EVENT_SPELL_DEMON_PULSE:
                 DoCast(SPELL_DEMON_AURA_PULSE);
-                events.RepeatEvent(1000);
+                events.Repeat(Milliseconds(1000));
                 break;
             
             }
